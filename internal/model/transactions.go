@@ -16,7 +16,7 @@ const (
 type Transaction struct {
 	ID          uuid.UUID  `json:"id"`
 	UserID      uuid.UUID  `json:"user_id"`
-	Amount      float64    `json:"amount"`
+	Amount      float64    `json:"amount" db:"amount"`
 	Type        TxnType    `json:"type"`
 	Category    string     `json:"category"`
 	Description *string    `json:"description,omitempty"` // Pointer to handle SQL NULL

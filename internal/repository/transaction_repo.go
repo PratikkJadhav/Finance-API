@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/PratikkJadhav/Finance-API/internal/model"
-	"github.com/gofrs/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type TransactionRepo struct {
@@ -39,7 +39,7 @@ func (r *TransactionRepo) GetDashboardSummary(ctx context.Context, userID uuid.U
 	`
 
 	var income, expense, balance float64
-	err := r.db.QueryRow(ctx, query, userID).Scan(&income, &expense, &balance)
+	err := r.db.QueryRow(ctx, query, userID).Scan(&income, &balance, &expense)
 	if err != nil {
 		return nil, err
 	}

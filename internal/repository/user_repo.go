@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/PratikkJadhav/Finance-API/internal/model"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserRepo struct {
@@ -47,7 +48,7 @@ func (r *UserRepo) GetByEmail(ctx context.Context, email string) (*model.User, e
 	return user, nil
 }
 
-func (r *UserRepo) GetByID(ctx context.Context, id string) (*model.User, error) {
+func (r *UserRepo) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	query := `
 		SELECT id , email , password , name , role , is_active , created_at, updated_at
 		FROM users
