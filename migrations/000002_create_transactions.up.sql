@@ -8,10 +8,10 @@ CREATE TABLE transactions (
     category TEXT NOT NULL,
     description TEXT,
     date DATE NOT NULL,
-    deleted_at TIMESTAMPZ,
+    deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+);  
 
 CREATE INDEX idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX idx_transactions_date ON transactions(date);
