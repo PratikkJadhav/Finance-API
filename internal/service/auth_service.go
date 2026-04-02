@@ -36,19 +36,17 @@ func (s *AuthService) Register(ctx context.Context, input RegisterInput) (*model
 	if err := validator.Validate(input); err != nil {
 		return nil, err
 	}
-	// check if email already exists
+
 	existing, _ := s.userRepo.GetByEmail(ctx, input.Email)
 	if existing != nil {
 		return nil, errors.New("email already registered")
 	}
 
-	// hash password
 	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.New("failed to hash password")
 	}
 
-	// default role to viewer
 	role := model.RoleViewer
 	if input.Role != "" {
 		role = model.Role(input.Role)
@@ -81,24 +79,21 @@ type LoginResponse struct {
 }
 
 func (s *AuthService) Login(ctx context.Context, input LoginInput) (*LoginResponse, error) {
-	// fetch user by email
+
 	user, err := s.userRepo.GetByEmail(ctx, input.Email)
 	if err != nil {
 		return nil, errors.New("invalid email or password")
 	}
 
-	// check if account is active
 	if !user.IsActive {
 		return nil, errors.New("account is deactivated")
 	}
 
-	// compare password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 	if err != nil {
 		return nil, errors.New("invalid email or password")
 	}
 
-	// generate JWT
 	token, err := s.generateJWT(user)
 	if err != nil {
 		return nil, errors.New("failed to generate token")

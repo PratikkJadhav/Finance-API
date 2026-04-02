@@ -248,7 +248,7 @@ func (r *TransactionRepo) GetMonthlyTrends(ctx context.Context, userID string) (
 	args := []interface{}{}
 	userFilter := ""
 	if userID != "" {
-		// UPDATED: Include shared access in trends
+
 		userFilter = "AND (user_id = $1 OR user_id IN (SELECT owner_id FROM shared_access WHERE shared_with_id = $1))"
 		args = append(args, userID)
 	}
@@ -292,7 +292,7 @@ func (r *TransactionRepo) GetCategoryTotals(ctx context.Context, userID string) 
 	args := []interface{}{}
 	userFilter := ""
 	if userID != "" {
-		// UPDATED: Include shared access in category totals
+
 		userFilter = "AND (user_id = $1 OR user_id IN (SELECT owner_id FROM shared_access WHERE shared_with_id = $1))"
 		args = append(args, userID)
 	}

@@ -1,4 +1,3 @@
-// internal/service/transaction_service.go
 package service
 
 import (
@@ -18,8 +17,6 @@ type TransactionService struct {
 func NewTransactionService(txnRepo *repository.TransactionRepo) *TransactionService {
 	return &TransactionService{txnRepo: txnRepo}
 }
-
-// --- input structs ---
 
 type CreateTransactionInput struct {
 	UserID      string  `json:"user_id"`
@@ -47,8 +44,6 @@ type TransactionFilter struct {
 	Page     int
 	Limit    int
 }
-
-// --- methods ---
 
 func (s *TransactionService) Create(ctx context.Context, input dto.CreateTransactionInput) (*model.Transaction, error) {
 	if err := validator.Validate(input); err != nil {

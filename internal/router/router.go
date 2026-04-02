@@ -12,7 +12,7 @@ func NewRouter(
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
 	txnHandler *handler.TransactionHandler,
-	shareHandler *handler.ShareHandler, // <--- 1. ADD THIS HERE
+	shareHandler *handler.ShareHandler,
 	jwtSecret string,
 ) *chi.Mux {
 	r := chi.NewRouter()
@@ -25,9 +25,9 @@ func NewRouter(
 	}))
 
 	// global middleware
-	r.Use(customMiddleware.Logger) // our custom logger
-	r.Use(chiMiddleware.Recoverer) // panic recovery
-	r.Use(chiMiddleware.RequestID) // attach request ID
+	r.Use(customMiddleware.Logger)
+	r.Use(chiMiddleware.Recoverer)
+	r.Use(chiMiddleware.RequestID)
 
 	// public routes
 	r.Post("/auth/register", authHandler.Register)
@@ -37,10 +37,8 @@ func NewRouter(
 	r.Group(func(r chi.Router) {
 		r.Use(customMiddleware.AuthMiddleware(jwtSecret))
 
-		// --- 2. ADD THIS NEW SHARE ROUTE ---
-		// We let any logged-in user share their own data
+		// let any logged in user share their own data
 		r.Post("/share", shareHandler.ShareData)
-		// -----------------------------------
 
 		// user management — admin only
 		r.Group(func(r chi.Router) {

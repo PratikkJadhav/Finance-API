@@ -74,7 +74,7 @@ func (h *TransactionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	txn, err := h.txnService.GetByID(r.Context(), id)
 	if err != nil {
-		handleRepoError(w, err) // was: writeError(w, http.StatusNotFound, "transaction not found")
+		handleRepoError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, txn)
