@@ -44,7 +44,8 @@ func (r *TransactionRepo) GetAll(ctx context.Context, filter dto.TransactionFilt
 	argIdx := 1
 
 	if filter.UserID != "" {
-		conditions = append(conditions, fmt.Sprintf("user_id = $%d", argIdx))
+		// UPDATED: Fetch own transactions OR transactions shared with this user
+		conditions = append(conditions, fmt.Sprintf("(user_id = $%d OR user_id IN (SELECT owner_id FROM shared_access WHERE shared_with_id = $%d))", argIdx, argIdx))
 		args = append(args, filter.UserID)
 		argIdx++
 	}
@@ -162,7 +163,8 @@ func (r *TransactionRepo) GetSummaryByUser(ctx context.Context, userID string) (
 			COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS total_expense,
 			COALESCE(SUM(CASE WHEN type = 'income'  THEN amount ELSE -amount END), 0) AS net_balance
 		FROM transactions
-		WHERE user_id = $1 AND deleted_at IS NULL
+		WHERE (user_id = $1 OR user_id IN (SELECT owner_id FROM shared_access WHERE shared_with_id = $1)) 
+		AND deleted_at IS NULL
 	`
 	var income, expense, balance float64
 	err := r.db.QueryRow(ctx, query, userID).Scan(&income, &expense, &balance)
@@ -213,7 +215,7 @@ func (r *TransactionRepo) GetRecent(ctx context.Context, userID string, role str
 		query = `
 			SELECT id, user_id, amount, type, category, description, date, created_at, updated_at
 			FROM transactions
-			WHERE deleted_at IS NULL AND user_id = $1
+			WHERE deleted_at IS NULL AND (user_id = $1 OR user_id IN (SELECT owner_id FROM shared_access WHERE shared_with_id = $1))
 			ORDER BY created_at DESC
 			LIMIT 10
 		`
@@ -246,7 +248,8 @@ func (r *TransactionRepo) GetMonthlyTrends(ctx context.Context, userID string) (
 	args := []interface{}{}
 	userFilter := ""
 	if userID != "" {
-		userFilter = "AND user_id = $1"
+		// UPDATED: Include shared access in trends
+		userFilter = "AND (user_id = $1 OR user_id IN (SELECT owner_id FROM shared_access WHERE shared_with_id = $1))"
 		args = append(args, userID)
 	}
 
@@ -289,7 +292,8 @@ func (r *TransactionRepo) GetCategoryTotals(ctx context.Context, userID string) 
 	args := []interface{}{}
 	userFilter := ""
 	if userID != "" {
-		userFilter = "AND user_id = $1"
+		// UPDATED: Include shared access in category totals
+		userFilter = "AND (user_id = $1 OR user_id IN (SELECT owner_id FROM shared_access WHERE shared_with_id = $1))"
 		args = append(args, userID)
 	}
 

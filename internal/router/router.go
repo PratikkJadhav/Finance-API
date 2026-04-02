@@ -1,4 +1,3 @@
-// internal/router/router.go
 package router
 
 import (
@@ -6,15 +5,24 @@ import (
 	customMiddleware "github.com/PratikkJadhav/Finance-API/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func NewRouter(
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
 	txnHandler *handler.TransactionHandler,
+	shareHandler *handler.ShareHandler, // <--- 1. ADD THIS HERE
 	jwtSecret string,
 ) *chi.Mux {
 	r := chi.NewRouter()
+
+	// Handle CORS so your HTML file doesn't get blocked
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+	}))
 
 	// global middleware
 	r.Use(customMiddleware.Logger) // our custom logger
@@ -29,6 +37,11 @@ func NewRouter(
 	r.Group(func(r chi.Router) {
 		r.Use(customMiddleware.AuthMiddleware(jwtSecret))
 
+		// --- 2. ADD THIS NEW SHARE ROUTE ---
+		// We let any logged-in user share their own data
+		r.Post("/share", shareHandler.ShareData)
+		// -----------------------------------
+
 		// user management — admin only
 		r.Group(func(r chi.Router) {
 			r.Use(customMiddleware.RequireRole("admin"))
@@ -39,8 +52,8 @@ func NewRouter(
 
 		// transactions
 		r.Group(func(r chi.Router) {
-			r.With(customMiddleware.RequireRole("viewer", "analyst", "admin")).Get("/transactions", txnHandler.List)
-			r.With(customMiddleware.RequireRole("viewer", "analyst", "admin")).Get("/transactions/{id}", txnHandler.GetByID)
+			r.With(customMiddleware.RequireRole("viewers", "analyst", "admin")).Get("/transactions", txnHandler.List)
+			r.With(customMiddleware.RequireRole("viewers", "analyst", "admin")).Get("/transactions/{id}", txnHandler.GetByID)
 			r.With(customMiddleware.RequireRole("analyst", "admin")).Post("/transactions", txnHandler.Create)
 			r.With(customMiddleware.RequireRole("analyst", "admin")).Put("/transactions/{id}", txnHandler.Update)
 			r.With(customMiddleware.RequireRole("admin")).Delete("/transactions/{id}", txnHandler.Delete)
@@ -48,7 +61,7 @@ func NewRouter(
 
 		// dashboard
 		r.Group(func(r chi.Router) {
-			r.Use(customMiddleware.RequireRole("viewer", "analyst", "admin"))
+			r.Use(customMiddleware.RequireRole("viewers", "analyst", "admin"))
 			r.Get("/dashboard/summary", txnHandler.GetSummary)
 			r.Get("/dashboard/recent", txnHandler.GetRecent)
 			r.With(customMiddleware.RequireRole("analyst", "admin")).Get("/dashboard/trends", txnHandler.GetTrends)

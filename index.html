@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Dashboard Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8 font-sans">
+    <div class="max-w-4xl mx-auto space-y-8">
+        
+        <div class="flex justify-between items-center bg-white p-6 rounded-lg shadow">
+            <h1 class="text-2xl font-bold">Finance API Tester</h1>
+            <div id="authStatus" class="text-red-500 font-semibold">Not Logged In</div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow space-y-4">
+                <h2 class="text-xl font-bold border-b pb-2">1. Authenticate</h2>
+                
+                <div class="bg-indigo-50 p-4 rounded border border-indigo-100 mb-4">
+                    <h3 class="font-semibold mb-2 text-indigo-700">Register New User</h3>
+                    <input type="text" id="regName" placeholder="Full Name" class="w-full mb-2 p-2 border rounded">
+                    <input type="email" id="regEmail" placeholder="Email" class="w-full mb-2 p-2 border rounded">
+                    <input type="password" id="regPass" placeholder="Password" class="w-full mb-2 p-2 border rounded">
+                    <select id="regRole" class="w-full mb-2 p-2 border rounded">
+                        <option value="viewers">Viewer (Read Only)</option>
+                        <option value="analyst">Analyst (Read + Create)</option>
+                        <option value="admin">Admin (Full Access)</option>
+                    </select>
+                    <button onclick="register()" class="w-full bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 font-semibold">Register</button>
+                </div>
+
+                <div class="p-4 border rounded">
+                    <h3 class="font-semibold mb-2">Login</h3>
+                    <input type="email" id="loginEmail" placeholder="admin@test.com" class="w-full mb-2 p-2 border rounded">
+                    <input type="password" id="loginPass" placeholder="password123" class="w-full mb-2 p-2 border rounded">
+                    <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 font-semibold">Login</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold border-b pb-2 mb-4">2. Dashboard Summary</h2>
+                <button onclick="getSummary()" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 mb-4 font-semibold">Fetch Summary</button>
+                <pre id="summaryOutput" class="bg-gray-800 text-green-400 p-4 rounded text-sm overflow-x-auto h-64">Run fetch to see data...</pre>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold border-b pb-2 mb-4">3. Add Transaction</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <input type="number" id="txnAmount" placeholder="Amount (e.g. 1500)" class="p-2 border rounded">
+                <select id="txnType" class="p-2 border rounded">
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                </select>
+                <input type="text" id="txnCategory" placeholder="Category (e.g. salary)" class="p-2 border rounded">
+                <input type="date" id="txnDate" class="p-2 border rounded">
+            </div>
+            <button onclick="addTransaction()" class="w-full bg-purple-500 text-white p-2 rounded hover:bg-purple-600 font-semibold">Submit Transaction</button>
+            <div id="txnResult" class="mt-4 text-sm font-semibold"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow mt-8">
+            <h2 class="text-xl font-bold border-b pb-2 mb-4">4. Share Your Data</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <input type="email" id="shareEmail" placeholder="User's Email (e.g. analyst@finance.com)" class="p-2 border rounded">
+                <select id="sharePerm" class="p-2 border rounded">
+                    <option value="viewer">Viewer</option>
+                    <option value="analyst">Analyst</option>
+                </select>
+                <button onclick="shareAccess()" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 font-semibold">Share</button>
+            </div>
+            <div id="shareResult" class="mt-4 text-sm font-semibold"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8080";
+        let jwtToken = "";
+
+        // UI Helper
+        function updateStatus() {
+            const statusDiv = document.getElementById("authStatus");
+            if (jwtToken) {
+                statusDiv.textContent = "Logged In (Token Active)";
+                statusDiv.className = "text-green-500 font-semibold";
+            } else {
+                statusDiv.textContent = "Not Logged In";
+                statusDiv.className = "text-red-500 font-semibold";
+            }
+        }
+
+        async function register() {
+            const name = document.getElementById("regName").value;
+            const email = document.getElementById("regEmail").value;
+            const password = document.getElementById("regPass").value;
+            const role = document.getElementById("regRole").value;
+
+            if (!name || !email || !password) return alert("Please fill in all registration fields.");
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                
+                if (res.ok) {
+                    alert("✅ Registration successful! You can now login.");
+                    // Auto-fill the login boxes
+                    document.getElementById("loginEmail").value = email;
+                    document.getElementById("loginPass").value = password;
+                    
+                    // Clear register form
+                    document.getElementById("regName").value = "";
+                    document.getElementById("regEmail").value = "";
+                    document.getElementById("regPass").value = "";
+                } else {
+                    const data = await res.json();
+                    alert("❌ Registration failed: " + JSON.stringify(data));
+                }
+            } catch (err) {
+                alert("Error connecting to backend: " + err);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPass").value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    jwtToken = data.token; 
+                    updateStatus();
+                    alert("Login successful!");
+                    
+                    // Auto-fetch summary on login
+                    getSummary();
+                } else {
+                    alert("Login failed: " + JSON.stringify(data));
+                }
+            } catch (err) {
+                alert("Error connecting to backend: " + err);
+            }
+        }
+
+        async function getSummary() {
+            if (!jwtToken) return alert("Please login first!");
+
+            try {
+                const res = await fetch(`${API_URL}/dashboard/summary`, {
+                    headers: { "Authorization": `Bearer ${jwtToken}` }
+                });
+                const data = await res.json();
+                document.getElementById("summaryOutput").textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById("summaryOutput").textContent = "Error: " + err;
+            }
+        }
+
+        async function addTransaction() {
+            if (!jwtToken) return alert("Please login first!");
+
+            const amount = parseFloat(document.getElementById("txnAmount").value);
+            const type = document.getElementById("txnType").value;
+            const category = document.getElementById("txnCategory").value;
+            
+            const rawDate = document.getElementById("txnDate").value;
+            if (!rawDate) return alert("Please select a date");
+            const date = rawDate + "T00:00:00Z"; 
+
+            try {
+                const res = await fetch(`${API_URL}/transactions`, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ amount, type, category, date })
+                });
+                
+                if (res.ok) {
+                    document.getElementById("txnResult").textContent = "✅ Transaction added successfully!";
+                    document.getElementById("txnResult").className = "mt-4 text-sm font-semibold text-green-600";
+                    getSummary(); // Auto-refresh dashboard
+                } else {
+                    const errData = await res.json();
+                    document.getElementById("txnResult").textContent = "❌ Failed: " + JSON.stringify(errData);
+                    document.getElementById("txnResult").className = "mt-4 text-sm font-semibold text-red-600";
+                }
+            } catch (err) {
+                alert("Error: " + err);
+            }
+        }
+
+        async function shareAccess() {
+            if (!jwtToken) return alert("Please login first!");
+            const shared_with_email = document.getElementById("shareEmail").value;
+            const permission = document.getElementById("sharePerm").value;
+
+            try {
+                const res = await fetch(`${API_URL}/share`, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({ shared_with_email, permission })
+                });
+                
+                if (res.ok) {
+                    document.getElementById("shareResult").textContent = "✅ Access shared successfully!";
+                    document.getElementById("shareResult").className = "mt-4 text-sm font-semibold text-green-600";
+                } else {
+                    const errData = await res.text();
+                    document.getElementById("shareResult").textContent = "❌ Failed: " + JSON.stringify(errData);
+                    document.getElementById("shareResult").className = "mt-4 text-sm font-semibold text-red-600";
+                }
+            } catch (err) {
+                alert("Error: " + err);
+            }
+        }   
+    </script>
+</body>
+</html>

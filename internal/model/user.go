@@ -9,7 +9,7 @@ import (
 type Role string
 
 const (
-	RoleViewers Role = "viewers"
+	RoleViewer  Role = "viewer"
 	RoleAnalyst Role = "analyst"
 	RoleAdmin   Role = "admin"
 )
@@ -21,6 +21,6 @@ type User struct {
 	Name      string    `json:"name"`
 	Role      Role      `json:"role"`
 	IsActive  bool      `json:"is_active"`
-	CreatedAt time.Time `json:"cr3eated_at"`
+	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

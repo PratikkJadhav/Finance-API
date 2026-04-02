@@ -50,7 +50,7 @@ func (h *TransactionHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
 	role := middleware.GetRole(r)
 
-	// viewers and analysts only see their own transactions
+	// viewer and analysts only see their own transactions
 	// admins can see all
 	if role != "admin" {
 		filter.UserID = userID

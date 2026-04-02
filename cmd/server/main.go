@@ -24,6 +24,7 @@ func main() {
 	// 3. repositories
 	userRepo := repository.NewUserRepo(database.Conn)
 	txnRepo := repository.NewTransactionRepo(database.Conn)
+	shareRepo := repository.NewShareRepo(database.Conn)
 
 	// 4. services
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
@@ -34,9 +35,10 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	txnHandler := handler.NewTransactionHandler(txnService)
+	shareHandler := handler.NewShareHandler(shareRepo, userRepo)
 
 	// 6. router
-	r := router.NewRouter(authHandler, userHandler, txnHandler, cfg.JWTSecret)
+	r := router.NewRouter(authHandler, userHandler, txnHandler, shareHandler, cfg.JWTSecret)
 
 	// 7. start server
 	addr := fmt.Sprintf(":%s", cfg.Port)

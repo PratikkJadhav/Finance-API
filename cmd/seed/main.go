@@ -36,7 +36,7 @@ func main() {
 	}{
 		{"admin@finance.com", "Admin User", "admin"},
 		{"analyst@finance.com", "Analyst User", "analyst"},
-		{"viewer@finance.com", "Viewer User", "viewer"},
+		{"viewer@finance.com", "Viewer User", "viewers"},
 	}
 
 	userIDs := []string{}

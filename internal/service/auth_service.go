@@ -49,7 +49,7 @@ func (s *AuthService) Register(ctx context.Context, input RegisterInput) (*model
 	}
 
 	// default role to viewer
-	role := model.RoleViewers
+	role := model.RoleViewer
 	if input.Role != "" {
 		role = model.Role(input.Role)
 	}
